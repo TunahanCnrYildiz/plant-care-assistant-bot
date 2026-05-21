@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDEs/Editors
+.vscode/
+.idea/
+
+# Ödev/Kişisel Dosyalar (Hariç Tutulanlar)
+251478112_Tunahan_Caner_YILDIZ/
+rapor.pdf
+Ödev 8.docx
+queue.txt
