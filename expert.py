@@ -33,7 +33,7 @@ def main():
             istemci_soketi, adres = sunucu_soketi.accept()
             
             # Bağlantı gelince botun yolladığı soruyu alıyoruz
-            soru_verisi = istemci_soketi.recv(1024)
+            soru_verisi = istemci_soketi.recv(4096)
             if not soru_verisi:
                 istemci_soketi.close()
                 continue

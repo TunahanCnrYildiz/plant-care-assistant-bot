@@ -91,12 +91,13 @@ Uygulama, istemci-sunucu (Client-Server) mimarisinde çalışır:
 ---
 
 ## 🔍 Karakter Eşleştirme Algoritması / Character Matching Algorithm
-Kullanıcı girdisini analiz etmek için harf frekanslarına dayalı özel bir `yaklasik_esitlik` algoritması yazılmıştır:
-1. Girdi ve anahtar kelimeler küçük harfe dönüştürülür ve boşluklardan arındırılır.
-2. Girdideki her harfin, hedef kelimede bulunup bulunmadığı kontrol edilir.
-3. Aynı harfin tekrar tekrar sayılmasını önlemek için eşleşen harfler listeden silinir.
-4. **Skor Formülü:** `(Ortak Harf Sayısı / Bilgi Tabanındaki Kelimenin Uzunluğu) * 100`
-   - *Bu formül sayesinde, kullanıcı "kurudu" yazdığında "kuru" anahtarı ile %100 eşleşme yakalanabilir.*
+Kullanıcı girdisini daha doğru ve anlamlı analiz etmek için Python'un yerleşik `difflib.SequenceMatcher` sınıfını kullanan kelime tabanlı yeni bir `yaklasik_esitlik` algoritması uygulanmıştır:
+1. Girdi ve anahtar kelimeler küçük harfe dönüştürülür.
+2. Kullanıcının girdisi kelimelere (boşluklara göre) ayrılır.
+3. Eğer bilgi tabanındaki anahtar kelime, kullanıcının girdisinin içinde doğrudan geçiyorsa (substring olarak), %100 eşleşme kabul edilir.
+4. Doğrudan eşleşme yoksa, girdideki her kelime ile anahtar kelime arasında `difflib.SequenceMatcher(None, anahtar, kelime).ratio() * 100` formülüyle benzerlik skoru hesaplanır.
+5. En yüksek benzerlik skorunu üreten anahtar kelime tercih edilir.
+   - *Bu algoritma, rastgele harflerin torba yöntemiyle birleşmesini önler ve yalnızca anlamlı/yakın kelime eşleşmelerinde yüksek skor verir.*
 
 ---
 

@@ -1,6 +1,7 @@
 import sys
 import time
 import socket
+import difflib
 
 def bilgi_yukle():
     # Bilgileri txt dosyasından okuyup sözlüğe atıyoruz
@@ -25,7 +26,7 @@ def uzmana_sor(soru):
         istemci_soketi.sendall(soru.encode('utf-8'))
         
         # Uzman cevap yazana kadar bekle
-        cevap = istemci_soketi.recv(1024).decode('utf-8')
+        cevap = istemci_soketi.recv(4096).decode('utf-8')
         istemci_soketi.close()
         return cevap
     except ConnectionRefusedError:
@@ -34,52 +35,28 @@ def uzmana_sor(soru):
         return f"[Sistem Hatası] Beklenmeyen bir hata oluştu: {hata}"
 
 def yaklasik_esitlik(kullanici_girdisi, bilgi_sozlugu):
-    kullanici_girdisi = kullanici_girdisi.lower()
+    kullanici_girdisi_kucuk = kullanici_girdisi.lower()
+    kelimeler = kullanici_girdisi_kucuk.split()
+
     en_iyi_anahtar = None
     en_iyi_skor = 0
     
-    # Kullanıcının yazdığı cümleden boşlukları çıkarıyoruz ki sadece harflere odaklanalım
-    temiz_girdi = ""
-    for harf in kullanici_girdisi:
-        if harf != " ":
-            temiz_girdi += harf
-            
-    # Sözlükteki tüm anahtarları tek tek gezip en çok benzeyeni bulmaya çalışıyoruz
     for anahtar in bilgi_sozlugu.keys():
         anahtar_kucuk = anahtar.lower()
         
-        # Önce anahtardaki boşlukları atıp harflerini bir listeye koyuyoruz
-        anahtar_harfleri = []
-        for harf in anahtar_kucuk:
-            if harf != " ":
-                anahtar_harfleri.append(harf)
-                
-        ortak_harf_sayisi = 0
-        
-        # Girdiğimiz harfler sözlükteki kelimenin içinde var mı diye bakıyoruz
-        for harf in temiz_girdi:
-            if harf in anahtar_harfleri:
-                ortak_harf_sayisi += 1
-                # Aynı harfi tekrar tekrar saymasın diye bulduğumuz harfi listeden siliyoruz
-                anahtar_harfleri.remove(harf)  
-                
-        # Skoru hesaplıyoruz: (Ortak Harf Sayısı / Sözlükteki Kelimenin Uzunluğu) * 100
-        # Not: Sadece sözlük kelimesinin uzunluğuna bölüyoruz ki kullanıcı "kurudu" yazdığında "kuru" kelimesiyle %100 eşleşebilsin.
-        anahtar_uzunluk = 0
-        for harf in anahtar_kucuk:
-            if harf != " ":
-                anahtar_uzunluk += 1
-                
-        if anahtar_uzunluk > 0:
-            skor = (ortak_harf_sayisi / anahtar_uzunluk) * 100
-        else:
-            skor = 0
+        # Eğer anahtar tam olarak kelimelerin içinde veya cümlenin içinde geçiyorsa
+        if anahtar_kucuk in kullanici_girdisi_kucuk:
+            return anahtar, 100.0
             
-        # Eğer bu kelimenin skoru şu ana kadarki en iyiyse, bunu kaydediyoruz
-        if skor > en_iyi_skor:
-            en_iyi_skor = skor
-            en_iyi_anahtar = anahtar
+        # Girdi kelimeleri ile anahtar arasında benzerlik kontrolü (difflib)
+        for kelime in kelimeler:
+            benzerlik = difflib.SequenceMatcher(None, anahtar_kucuk, kelime).ratio() * 100
             
+            # Eğer skor mevcut en iyi skordan fazlaysa güncelle
+            if benzerlik > en_iyi_skor:
+                en_iyi_skor = benzerlik
+                en_iyi_anahtar = anahtar
+
     return en_iyi_anahtar, en_iyi_skor
 
 def cevap_bul(soru, bilgi_tabani):
