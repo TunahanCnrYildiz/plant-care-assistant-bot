@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Botanik Uzman Paneli / Botanist Expert Panel</title>
+    <!-- Google Fonts Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0b0f19 0%, #05060b 100%);
+            --amber-color: #f59e0b;
+            --amber-light: #fbbf24;
+            --glass-bg: rgba(20, 24, 35, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.06);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --card-bg: rgba(255, 255, 255, 0.02);
+            --accent-glow: 0 0 30px rgba(245, 158, 11, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* App Container */
+        .app-container {
+            display: flex;
+            width: 90%;
+            max-width: 1200px;
+            height: 85vh;
+            background: rgba(15, 19, 30, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), var(--accent-glow);
+            overflow: hidden;
+        }
+
+        /* Sidebar Settings */
+        .sidebar {
+            width: 320px;
+            border-right: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+
+        .brand-icon {
+            font-size: 2rem;
+            color: var(--amber-color);
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        .brand-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            background: linear-gradient(to right, #ffffff, var(--amber-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .metric-num {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--amber-color);
+            line-height: 1;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .exit-btn {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .exit-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+
+        /* Dashboard Panel */
+        .dashboard-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .status-badge {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            padding: 6px 12px;
+            border-radius: 10px;
+            color: var(--amber-color);
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--amber-color);
+            border-radius: 50%;
+            animation: blink 1.5s infinite;
+        }
+
+        .cases-container {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 20px;
+            align-content: start;
+        }
+
+        /* Custom Scrollbar */
+        .cases-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .cases-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .cases-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 3px;
+        }
+
+        /* Case Card */
+        .case-card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 16px;
+            animation: cardSlideIn 0.3s ease-out forwards;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .case-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(to right, var(--amber-color), #ec4899);
+        }
+
+        .case-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .lang-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            text-transform: uppercase;
+        }
+
+        .lang-badge.tr {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.08);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .lang-badge.en {
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.08);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .chat-log {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 180px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        /* Scrollbar in chat log */
+        .chat-log::-webkit-scrollbar {
+            width: 4px;
+        }
+        .chat-log::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .chat-msg {
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            line-height: 1.4;
+        }
+
+        .chat-msg.user {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            align-self: flex-start;
+        }
+
+        .chat-msg.expert {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.15);
+            color: var(--amber-light);
+            align-self: flex-end;
+        }
+
+        .answer-area {
+            width: 100%;
+            min-height: 70px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 12px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            outline: none;
+            resize: vertical;
+            transition: all 0.3s;
+        }
+
+        .answer-area:focus {
+            border-color: var(--amber-color);
+            background: rgba(255, 255, 255, 0.04);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.15);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .submit-btn {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border: none;
+            border-radius: 12px;
+            color: #000000;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .close-session-btn {
+            padding: 12px 16px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+            color: #ef4444;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-session-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* Empty State */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 80px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 3.5rem;
+            color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Animations */
+        @keyframes blink {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        @keyframes cardSlideIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Success Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(74, 222, 128, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #000000;
+            padding: 16px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: cardSlideIn 0.3s ease-out;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div>
+                <div class="brand">
+                    <span class="brand-icon">👨‍🌾</span>
+                    <h1 class="brand-title">Botanik Uzman</h1>
+                </div>
+
+                <!-- Stats Metrics -->
+                <div class="metric-card">
+                    <span class="metric-num" id="metric-pending">0</span>
+                    <span class="metric-label">Aktif Oturum</span>
+                </div>
+
+                <div class="metric-card">
+                    <span class="metric-num" id="metric-resolved">0</span>
+                    <span class="metric-label">Cevaplanan Mesaj</span>
+                </div>
+            </div>
+
+            <!-- Exit Button -->
+            <button class="exit-btn" onclick="window.close();">Arayüzü Kapat</button>
+        </aside>
+
+        <!-- Dashboard -->
+        <main class="dashboard-panel">
+            <header class="dashboard-header">
+                <h2 style="font-size: 1.1rem; font-weight: 600;">Aktif Sohbet Odaları</h2>
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span>SOCKET & WEB AKTİF</span>
+                </div>
+            </header>
+
+            <!-- Cases Container -->
+            <div class="cases-container" id="cases-container">
+                <!-- Empty State -->
+                <div class="empty-state" id="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <div>Şu anda bekleyen veya aktif herhangi bir uzman sohbeti bulunmuyor.</div>
+                    <div style="font-size: 0.85rem;">Kullanıcılardan gelecek olan sorular bekleniyor...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const casesContainer = document.getElementById('cases-container');
+        const emptyState = document.getElementById('empty-state');
+        const pendingCountLabel = document.getElementById('metric-pending');
+        const resolvedCountLabel = document.getElementById('metric-resolved');
+
+        let pendingCount = 0;
+        let resolvedCount = 0;
+        const activeCases = new Set();
+
+        // Establish SSE connection
+        const eventSource = new EventSource('/api/expert/stream');
+
+        eventSource.onmessage = (event) => {
+            if (event.data === '[PING]') return;
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type === 'new_case') {
+                    addCaseCard(data);
+                } else if (data.type === 'new_message') {
+                    appendUserMessageToCard(data.session_id, data.question);
+                } else if (data.type === 'session_closed') {
+                    removeCaseCard(data.session_id);
+                }
+            } catch (err) {
+                console.error("Error parsing case event:", err);
+            }
+        };
+
+        function addCaseCard(data) {
+            if (activeCases.has(data.session_id)) return;
+            activeCases.add(data.session_id);
+
+            emptyState.style.display = 'none';
+
+            const card = document.createElement('div');
+            card.className = 'case-card';
+            card.id = `case-${data.session_id}`;
+
+            const relativeTime = new Date(data.timestamp * 1000).toLocaleTimeString();
+
+            card.innerHTML = `
+                <div>
+                    <div class="case-meta">
+                        <span class="lang-badge ${data.lang}">${data.lang === 'tr' ? 'TR' : 'EN'}</span>
+                        <span>${relativeTime}</span>
+                    </div>
+                    
+                    <!-- Chat history log inside case card -->
+                    <div class="chat-log" id="chat-log-${data.session_id}">
+                        <div class="chat-msg user">
+                            <strong>Kullanıcı:</strong> ${data.question}
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <textarea class="answer-area" placeholder="Yanıtınızı buraya yazın..." id="ans-${data.session_id}"></textarea>
+                    
+                    <div class="action-buttons">
+                        <button class="close-session-btn" title="Sohbeti Bitir ve Kapat" onclick="closeSession('${data.session_id}')">
+                            <span>Bitir</span>
+                        </button>
+                        <button class="submit-btn" onclick="submitAnswer('${data.session_id}')">
+                            <span>Gönder</span>
+                            <span>✉️</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // If history already has past elements (reconnection case), render them
+            casesContainer.appendChild(card);
+            
+            if (data.history && data.history.length > 1) {
+                const chatLog = document.getElementById(`chat-log-${data.session_id}`);
+                chatLog.innerHTML = ''; // clear initial question block
+                data.history.forEach(msg => {
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = `chat-msg ${msg.role}`;
+                    msgDiv.innerHTML = msg.role === 'user' 
+                        ? `<strong>Kullanıcı:</strong> ${msg.content}` 
+                        : `<strong>Uzman:</strong> ${msg.content}`;
+                    chatLog.appendChild(msgDiv);
+                });
+                chatLog.scrollTop = chatLog.scrollHeight;
+            }
+
+            pendingCount++;
+            pendingCountLabel.textContent = pendingCount;
+        }
+
+        function appendUserMessageToCard(sessionId, question) {
+            const chatLog = document.getElementById(`chat-log-${sessionId}`);
+            if (chatLog) {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'chat-msg user';
+                msgDiv.innerHTML = `<strong>Kullanıcı:</strong> ${question}`;
+                chatLog.appendChild(msgDiv);
+                chatLog.scrollTop = chatLog.scrollHeight;
+
+                // Visual highlight animation to alert expert of new messages
+                const card = document.getElementById(`case-${sessionId}`);
+                if (card) {
+                    card.style.borderColor = 'var(--amber-color)';
+                    setTimeout(() => {
+                        card.style.borderColor = 'var(--glass-border)';
+                    }, 1500);
+                }
+            }
+        }
+
+        function appendExpertMessageToCard(sessionId, answer) {
+            const chatLog = document.getElementById(`chat-log-${sessionId}`);
+            if (chatLog) {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'chat-msg expert';
+                msgDiv.innerHTML = `<strong>Uzman (Siz):</strong> ${answer}`;
+                chatLog.appendChild(msgDiv);
+                chatLog.scrollTop = chatLog.scrollHeight;
+            }
+        }
+
+        async function submitAnswer(sessionId) {
+            const answerInput = document.getElementById(`ans-${sessionId}`);
+            const answerText = answerInput.value.trim();
+            if (!answerText) return;
+
+            try {
+                const response = await fetch('/api/expert/answer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        answer: answerText
+                    })
+                });
+
+                if (response.ok) {
+                    // Update Chat Log on card instead of removing it!
+                    appendExpertMessageToCard(sessionId, answerText);
+                    answerInput.value = '';
+                    
+                    resolvedCount++;
+                    resolvedCountLabel.textContent = resolvedCount;
+                    
+                    showToast("Cevap gönderildi. Oturum aktif kalmaya devam ediyor.");
+                } else {
+                    alert("Cevap iletilemedi. Oturum kapatılmış olabilir.");
+                }
+            } catch (err) {
+                console.error("Error submitting answer:", err);
+                alert("Sunucu hatası!");
+            }
+        }
+
+        async function closeSession(sessionId) {
+            if (!confirm("Bu sohbet oturumunu sonlandırmak istediğinize emin misiniz?")) return;
+
+            try {
+                const response = await fetch('/api/expert/close', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sessionId
+                    })
+                });
+
+                if (response.ok) {
+                    removeCaseCard(sessionId);
+                    showToast("Sohbet sonlandırıldı ve oturum kapatıldı.");
+                } else {
+                    alert("Oturum kapatılamadı.");
+                }
+            } catch (err) {
+                console.error("Error closing session:", err);
+                alert("Sunucu hatası!");
+            }
+        }
+
+        function removeCaseCard(sessionId) {
+            if (!activeCases.has(sessionId)) return;
+            
+            const card = document.getElementById(`case-${sessionId}`);
+            if (card) {
+                casesContainer.removeChild(card);
+            }
+            activeCases.delete(sessionId);
+            
+            pendingCount--;
+            pendingCountLabel.textContent = pendingCount;
+
+            if (activeCases.size === 0) {
+                emptyState.style.display = 'flex';
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    document.body.removeChild(toast);
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

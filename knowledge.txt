@@ -1,0 +1,12 @@
+yellow|Bitkinizi fazla sulamış olabilirsiniz. Toprağın kurumasını bekleyin ve sulama sıklığını azaltın.
+dry|Bitkiniz susuz kalmış veya çok fazla doğrudan güneş ışığına maruz kalmış olabilir.
+brown|Ortamdaki nem oranı düşük olabilir. Yapraklara su püskürterek nemi artırmayı deneyin.
+wilted|Köklerde havasızlık veya ani sıcaklık değişimi olmuş olabilir. Ortamı havalandırın.
+dropping|Bitki strese girmiş olabilir. Yerini veya toprağını yakın zamanda değiştirdiyseniz bir süre adapte olmasını bekleyin.
+sunlight|Çoğu salon bitkisi doğrudan güneş ışığı yerine filtrelenmiş aydınlık ortamları sever.
+water|Genel kural olarak toprağın üst kısmı (2-3 cm) tamamen kurudukça sulama yapmalısınız.
+fertilizer|Bitkinize sadece ilkbahar ve yaz aylarında, büyüme döneminde gübre vermelisiniz.
+pot|Saksı değişimi genellikle ilkbahar aylarında, mevcut saksı köklerle dolduğunda yapılmalıdır.
+darkness|Işık yetersizliği bitkinizin boyunun uzamasına ama cılız kalmasına neden olur. Daha aydınlık bir yere alın.
+dust|Yaprakların tozlanması bitkinin fotosentez yapmasını zorlaştırır. Nemli bir bezle nazikçe silin.
+root|Bitkinizin kökleri saksı altındaki deliklerden çıkıyorsa, bir boy büyük saksıya geçme vakti gelmiştir.
