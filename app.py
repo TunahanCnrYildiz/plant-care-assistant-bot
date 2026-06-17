@@ -70,6 +70,10 @@ closed_sessions_lock = threading.Lock()
 expert_queues = []
 expert_queues_lock = threading.Lock()
 
+# Thread-safe User Notification Queues (for pushing events to user browsers)
+user_notification_queues = {}
+user_notification_queues_lock = threading.Lock()
+
 # Load Model and Vectorizer globally
 try:
     model = joblib.load('model.joblib')
@@ -326,9 +330,51 @@ def expert_close():
                 closed_sessions[session_id] = closing_msg
                 
             notify_expert_listeners_close(session_id)
+            
+            # Notify the user's notification stream
+            with user_notification_queues_lock:
+                if session_id in user_notification_queues:
+                    for q in user_notification_queues[session_id]:
+                        q.put({
+                            "type": "session_closed",
+                            "content": closing_msg,
+                            "prefix": LANG_STRINGS[lang]['system_prefix']
+                        })
+            
             return {"status": "success"}
         else:
-            return {"error": "Session not found"}, 404
+            return {"status": "success", "message": "Session already closed"}
+
+@app.route('/api/chat/notifications')
+def chat_notifications():
+    session_id = request.args.get('session_id')
+    if not session_id:
+        return "Missing session_id", 400
+        
+    def stream():
+        q = queue.Queue()
+        with user_notification_queues_lock:
+            if session_id not in user_notification_queues:
+                user_notification_queues[session_id] = []
+            user_notification_queues[session_id].append(q)
+        try:
+            # Send keep-alive PING immediately
+            yield "data: [PING]\n\n"
+            while True:
+                try:
+                    item = q.get(timeout=20)
+                    yield "data: {}\n\n".format(json.dumps(item))
+                except queue.Empty:
+                    yield "data: [PING]\n\n"
+        finally:
+            with user_notification_queues_lock:
+                if session_id in user_notification_queues:
+                    if q in user_notification_queues[session_id]:
+                        user_notification_queues[session_id].remove(q)
+                    if not user_notification_queues[session_id]:
+                        user_notification_queues.pop(session_id, None)
+                        
+    return Response(stream(), content_type='text/event-stream')
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
@@ -381,14 +427,16 @@ def chat():
             with active_chats_lock:
                 ans = chat_session['current_expert_answer'] if success else None
                 if ans:
-                    chat_session['question_history'].append({"role": "expert", "content": ans})
+                    if session_id in active_chats:
+                        chat_session['question_history'].append({"role": "expert", "content": ans})
                 else:
                     # Timeout cleanup
                     active_chats.pop(session_id, None)
                     notify_expert_listeners_close(session_id)
                     ans = "Uzmandan yanıt alınamadı. Sohbet sonlandırıldı."
             
-            yield f"data: {json.dumps({'type': 'expert_response', 'content': ans, 'prefix': LANG_STRINGS[lang]['expert_prefix']})}\n\n"
+            prefix = LANG_STRINGS[lang]['system_prefix'] if ans == LANG_STRINGS[lang]['expert_ended'] else LANG_STRINGS[lang]['expert_prefix']
+            yield f"data: {json.dumps({'type': 'expert_response', 'content': ans, 'prefix': prefix})}\n\n"
             yield "data: [DONE]\n\n"
             
         return Response(stream_with_context(chat_stream()), content_type='text/event-stream')
@@ -401,25 +449,26 @@ def chat():
             
             # Initialize persistent chat session
             event = threading.Event()
+            chat_session = {
+                "session_id": session_id,
+                "question_history": [{"role": "user", "content": user_input}],
+                "current_user_message": user_input,
+                "current_expert_answer": None,
+                "user_event": event,
+                "timestamp": time.time(),
+                "lang": lang
+            }
             with active_chats_lock:
-                active_chats[session_id] = {
-                    "session_id": session_id,
-                    "question_history": [{"role": "user", "content": user_input}],
-                    "current_user_message": user_input,
-                    "current_expert_answer": None,
-                    "user_event": event,
-                    "timestamp": time.time(),
-                    "lang": lang
-                }
+                active_chats[session_id] = chat_session
             notify_expert_listeners_new(session_id, user_input, lang)
             
             # Block waiting for first reply
             success = event.wait(timeout=60.0)
             
             with active_chats_lock:
-                if success and session_id in active_chats:
-                    ans = active_chats[session_id]['current_expert_answer']
-                    if ans:
+                ans = chat_session['current_expert_answer'] if success else None
+                if ans:
+                    if session_id in active_chats:
                         active_chats[session_id]['question_history'].append({"role": "expert", "content": ans})
                 else:
                     active_chats.pop(session_id, None)
@@ -432,7 +481,8 @@ def chat():
                         else:
                             ans = "Currently no experts are active. Please try again later."
                             
-            yield f"data: {json.dumps({'type': 'expert_response', 'content': ans, 'prefix': LANG_STRINGS[lang]['expert_prefix']})}\n\n"
+            prefix = LANG_STRINGS[lang]['system_prefix'] if ans == LANG_STRINGS[lang]['expert_ended'] else LANG_STRINGS[lang]['expert_prefix']
+            yield f"data: {json.dumps({'type': 'expert_response', 'content': ans, 'prefix': prefix})}\n\n"
             yield "data: [DONE]\n\n"
             return
             
@@ -451,24 +501,25 @@ def chat():
                 
                 # Initialize persistent chat session
                 event = threading.Event()
+                chat_session = {
+                    "session_id": session_id,
+                    "question_history": [{"role": "user", "content": user_input}],
+                    "current_user_message": user_input,
+                    "current_expert_answer": None,
+                    "user_event": event,
+                    "timestamp": time.time(),
+                    "lang": lang
+                }
                 with active_chats_lock:
-                    active_chats[session_id] = {
-                        "session_id": session_id,
-                        "question_history": [{"role": "user", "content": user_input}],
-                        "current_user_message": user_input,
-                        "current_expert_answer": None,
-                        "user_event": event,
-                        "timestamp": time.time(),
-                        "lang": lang
-                    }
+                    active_chats[session_id] = chat_session
                 notify_expert_listeners_new(session_id, user_input, lang)
                 
                 success = event.wait(timeout=60.0)
                 
                 with active_chats_lock:
-                    if success and session_id in active_chats:
-                        ans = active_chats[session_id]['current_expert_answer']
-                        if ans:
+                    ans = chat_session['current_expert_answer'] if success else None
+                    if ans:
+                        if session_id in active_chats:
                             active_chats[session_id]['question_history'].append({"role": "expert", "content": ans})
                     else:
                         active_chats.pop(session_id, None)
@@ -481,7 +532,8 @@ def chat():
                             else:
                                 ans = "Currently no experts are active. Please try again later."
                                 
-                yield f"data: {json.dumps({'type': 'expert_response', 'content': ans, 'prefix': LANG_STRINGS[lang]['expert_prefix']})}\n\n"
+                prefix = LANG_STRINGS[lang]['system_prefix'] if ans == LANG_STRINGS[lang]['expert_ended'] else LANG_STRINGS[lang]['expert_prefix']
+                yield f"data: {json.dumps({'type': 'expert_response', 'content': ans, 'prefix': prefix})}\n\n"
                 yield "data: [DONE]\n\n"
                 return
 

@@ -472,6 +472,26 @@
         // Generate a unique session ID for conversation state and expert chat persistence
         const sessionId = 'session_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
         let chatHistory = [];
+        let isSessionClosed = false;
+
+        // Establish SSE stream for user notifications
+        const notificationSource = new EventSource(`/api/chat/notifications?session_id=${sessionId}`);
+        notificationSource.onmessage = (event) => {
+            if (event.data === '[PING]') return;
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type === 'session_closed') {
+                    if (!isSessionClosed) {
+                        isSessionClosed = true;
+                        appendMessage(data.prefix, data.content, 'bot');
+                        statusText.textContent = langSelect.value === 'tr' ? 'Oturum Kapatıldı' : 'Session Terminated';
+                        notificationSource.close();
+                    }
+                }
+            } catch (err) {
+                console.error("Error parsing user notification:", err);
+            }
+        };
 
         // Simple localization mapping for static UI elements based on selected language
         const uiStrings = {
@@ -653,6 +673,12 @@
             } 
             else if (data.type === 'expert_response') {
                 // Expert response
+                if (data.content.includes("sonlandırılmıştır") || data.content.includes("terminated")) {
+                    if (isSessionClosed) return currentBotMessage;
+                    isSessionClosed = true;
+                    statusText.textContent = langSelect.value === 'tr' ? 'Oturum Kapatıldı' : 'Session Terminated';
+                    notificationSource.close();
+                }
                 appendMessage(data.prefix, data.content, 'bot');
             } 
             else if (data.type === 'db') {

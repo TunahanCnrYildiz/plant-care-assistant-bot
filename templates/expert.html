@@ -611,7 +611,9 @@
         }
 
         async function closeSession(sessionId) {
-            if (!confirm("Bu sohbet oturumunu sonlandırmak istediğinize emin misiniz?")) return;
+            const urlParams = new URLSearchParams(window.location.search);
+            const skipConfirm = urlParams.get('skip_confirm') === 'true';
+            if (!skipConfirm && !confirm("Bu sohbet oturumunu sonlandırmak istediğinize emin misiniz?")) return;
 
             try {
                 const response = await fetch('/api/expert/close', {
@@ -622,7 +624,7 @@
                     })
                 });
 
-                if (response.ok) {
+                if (response.ok || response.status === 404) {
                     removeCaseCard(sessionId);
                     showToast("Sohbet sonlandırıldı ve oturum kapatıldı.");
                 } else {
@@ -635,15 +637,13 @@
         }
 
         function removeCaseCard(sessionId) {
-            if (!activeCases.has(sessionId)) return;
-            
             const card = document.getElementById(`case-${sessionId}`);
             if (card) {
-                casesContainer.removeChild(card);
+                card.remove();
             }
             activeCases.delete(sessionId);
             
-            pendingCount--;
+            pendingCount = activeCases.size;
             pendingCountLabel.textContent = pendingCount;
 
             if (activeCases.size === 0) {
